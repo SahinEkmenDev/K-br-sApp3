@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KıbrısApp3", "KıbrısApp3\KıbrısApp3.csproj", "{E38C0BF2-2736-4B84-94E0-3958D0DA64A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E38C0BF2-2736-4B84-94E0-3958D0DA64A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E38C0BF2-2736-4B84-94E0-3958D0DA64A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E38C0BF2-2736-4B84-94E0-3958D0DA64A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E38C0BF2-2736-4B84-94E0-3958D0DA64A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B053699E-6748-41BA-8097-1A0E38B6951D}
+	EndGlobalSection
+EndGlobal
