@@ -10,5 +10,10 @@ namespace KıbrısApp3.Data
             : base(options)
         {
         }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<AdListing> AdListings { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<FavoriteAd> FavoriteAds { get; set; }
+
     }
 }
