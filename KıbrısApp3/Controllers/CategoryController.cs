@@ -15,113 +15,124 @@ namespace KıbrısApp3.Controllers
         {
             _context = context;
         }
-        [HttpGet]
-        public async Task<IActionResult> GetCategories()
-        {
-            var categories = await _context.Categories
-                                           .Select(c => new
-                                           {
-                                               c.Id,
-                                               c.Name,
-                                               c.ParentCategoryId
-                                           })
-                                           .ToListAsync();
 
-            return Ok(categories);
+        [HttpGet]
+        public async Task<IActionResult> GetCategoryTree()
+        {
+            var categories = await _context.Categories.ToListAsync();
+
+            var categoryDict = categories.ToDictionary(c => c.Id);
+
+            foreach (var category in categories)
+            {
+                if (category.ParentCategoryId.HasValue &&
+                    categoryDict.ContainsKey(category.ParentCategoryId.Value))
+                {
+                    var parent = categoryDict[category.ParentCategoryId.Value];
+                    parent.Children.Add(category);
+                }
+            }
+
+            // Sadece en üstteki (parent'ı olmayan) kategorileri döndürüyoruz
+            var rootCategories = categories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(BuildCategoryDto)
+                .ToList();
+
+            return Ok(rootCategories);
         }
 
+        // DTO dönüşüm (category → nested object)
+        private object BuildCategoryDto(Category category)
+        {
+            return new
+            {
+                id = category.Id,
+                name = category.Name,
+                children = category.Children.Select(BuildCategoryDto).ToList()
+            };
+        }
 
 
         [HttpPost("seed")]
         public async Task<IActionResult> SeedCategories()
         {
-            try
-            {
-                Console.WriteLine("🔹 Kategori ekleme işlemi başladı...");
+            if (_context.Categories.Any())
+                return Ok("Kategoriler zaten eklenmiş.");
 
-                if (!_context.Categories.Any())
-                {
-                    Console.WriteLine("🔹 Veritabanında hiç kategori yok, ekleniyor...");
+            // ✅ Ana kategoriler
+            var anaKategoriler = new List<Category>
+    {
+        new Category { Name = "Vasıta" },
+         new Category { Name = "Emlak" },
+        new Category { Name = "Telefon" },
+        new Category { Name = "Elektronik" },
+        new Category { Name = "Ev & Yaşam" },
+        new Category { Name = "Giyim & Aksesuar" },
+        new Category { Name = "Kişisel Bakım" },
+        new Category { Name = "Diğer" }
+       
+    };
 
-                    // 📌 Önce ANA KATEGORİLERİ ekleyelim
-                    var mainCategories = new List<Category>
-            {
-                new Category { Name = "Vasıta" },
-                new Category { Name = "Telefon & Elektronik" },
-                new Category { Name = "Ev & Yaşam" },
-                new Category { Name = "Giyim & Aksesuar" },
-                new Category { Name = "Kişisel Bakım" },
-                new Category { Name = "Diğer" }
-            };
+            await _context.Categories.AddRangeAsync(anaKategoriler);
+            await _context.SaveChangesAsync();
 
-                    await _context.Categories.AddRangeAsync(mainCategories);
-                    await _context.SaveChangesAsync();
+            // Ana kategori referansları
+            var vasita = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Vasıta");
+            var telefon = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Telefon");
+            var elektronik = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Elektronik");
+            var emlak = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Emlak");
 
-                    Console.WriteLine("✅ Ana kategoriler eklendi.");
+            // ✅ Vasıta alt kategorileri
+            var vasitaAltKategoriler = new List<Category>
+    {
+        new Category { Name = "Otomobil", ParentCategoryId = vasita.Id },
+        new Category { Name = "Arazi-SUV-Pick-Up", ParentCategoryId = vasita.Id },
+        new Category { Name = "Motosiklet", ParentCategoryId = vasita.Id },
+        new Category { Name = "ATV-UTV", ParentCategoryId = vasita.Id },
+        new Category { Name = "Karavan", ParentCategoryId = vasita.Id }
+           };
 
-                    // 📌 Şimdi ALT KATEGORİLERİ ekleyelim (Ana kategorileri ID'ye göre çekelim)
-                    var vasita = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Vasıta");
-                    var elektronik = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Telefon & Elektronik");
-                    var evYasam = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Ev & Yaşam");
-                    var giyim = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Giyim & Aksesuar");
-                    var kisiselBakim = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Kişisel Bakım");
-                    var diger = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Diğer");
+            // ✅ Telefon alt kategorileri
+            var telefonAltKategoriler = new List<Category>
+    {
+        new Category { Name = "iPhone", ParentCategoryId = telefon.Id },
+        new Category { Name = "Samsung", ParentCategoryId = telefon.Id },
+        new Category { Name = "Xiaomi", ParentCategoryId = telefon.Id },
+        new Category { Name = "Huawei", ParentCategoryId = telefon.Id }
+    };
 
-                    var subCategories = new List<Category>
-            {
-                // 📌 Vasıta Alt Kategorileri
-                new Category { Name = "Otomobil", ParentCategoryId = vasita.Id },
-                new Category { Name = "Arazi-SUV-Pick-Up", ParentCategoryId = vasita.Id },
-                new Category { Name = "Motosiklet", ParentCategoryId = vasita.Id },
-                new Category { Name = "ATV-UTV", ParentCategoryId = vasita.Id },
-                new Category { Name = "Karavan", ParentCategoryId = vasita.Id },
+            // ✅ Elektronik alt kategorileri
+            var elektronikAltKategoriler = new List<Category>
+    {
+        new Category { Name = "Bilgisayar", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Tablet", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Kulaklık", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Akıllı Saat", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Oyun Konsolu", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Televizyon", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Diğer", ParentCategoryId = elektronik.Id }
+    };
 
-                // 📌 Elektronik Alt Kategorileri
-                new Category { Name = "iPhone", ParentCategoryId = elektronik.Id },
-                new Category { Name = "Samsung", ParentCategoryId = elektronik.Id },
-                new Category { Name = "Xiaomi", ParentCategoryId = elektronik.Id },
-                new Category { Name = "Huawei", ParentCategoryId = elektronik.Id },
-                new Category { Name = "Tablet", ParentCategoryId = elektronik.Id },
+            // ✅ Emlak alt kategorileri
+            var emlakAltKategoriler = new List<Category>
+    {
+        new Category { Name = "Konut", ParentCategoryId = emlak.Id },
+        new Category { Name = "İşyeri", ParentCategoryId = emlak.Id },
+        new Category { Name = "Arsa", ParentCategoryId = emlak.Id }
+    };
 
-                // 📌 Ev & Yaşam Alt Kategorileri
-                new Category { Name = "Mobilya", ParentCategoryId = evYasam.Id },
-                new Category { Name = "Mutfak Gereçleri", ParentCategoryId = evYasam.Id },
-                new Category { Name = "Beyaz Eşya", ParentCategoryId = evYasam.Id },
+            // Hepsini tek seferde ekle
+            await _context.Categories.AddRangeAsync(vasitaAltKategoriler);
+            await _context.Categories.AddRangeAsync(telefonAltKategoriler);
+            await _context.Categories.AddRangeAsync(elektronikAltKategoriler);
+            await _context.Categories.AddRangeAsync(emlakAltKategoriler);
+            await _context.SaveChangesAsync();
 
-                // 📌 Giyim & Aksesuar Alt Kategorileri
-                new Category { Name = "Kadın", ParentCategoryId = giyim.Id },
-                new Category { Name = "Erkek", ParentCategoryId = giyim.Id },
-                new Category { Name = "Çocuk", ParentCategoryId = giyim.Id },
-
-                // 📌 Kişisel Bakım Alt Kategorileri
-                new Category { Name = "Makyaj", ParentCategoryId = kisiselBakim.Id },
-                new Category { Name = "Cilt Bakım", ParentCategoryId = kisiselBakim.Id },
-                new Category { Name = "Saç Bakım", ParentCategoryId = kisiselBakim.Id },
-
-                // 📌 Diğer Alt Kategoriler
-                new Category { Name = "Kitap-Kırtasiye", ParentCategoryId = diger.Id },
-                new Category { Name = "Hobi-Müzik", ParentCategoryId = diger.Id }
-            };
-
-                    await _context.Categories.AddRangeAsync(subCategories);
-                    await _context.SaveChangesAsync();
-
-                    Console.WriteLine("✅ Alt kategoriler eklendi!");
-                }
-                else
-                {
-                    Console.WriteLine("⚠️ Kategoriler zaten mevcut, ekleme yapılmadı.");
-                }
-
-                return Ok(new { message = "Kategori ekleme işlemi tamamlandı." });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Hata: {ex.Message}");
-                return StatusCode(500, new { message = "Kategori ekleme hatası!", error = ex.Message });
-            }
+            return Ok("Ana ve alt kategoriler başarıyla eklendi.");
         }
 
 
+       
     }
 }

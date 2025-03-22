@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using KıbrısApp3.DTO;
 
 namespace KıbrısApp3.Controllers
 {
@@ -19,40 +20,38 @@ namespace KıbrısApp3.Controllers
             _context = context;
         }
 
-        // 📌 Gelişmiş İlan Arama & Filtreleme
         [HttpGet("search")]
         public async Task<IActionResult> SearchAds(
-            [FromQuery] string? keyword,
-            [FromQuery] int? categoryId,
-            [FromQuery] decimal? minPrice,
-            [FromQuery] decimal? maxPrice,
-            [FromQuery] string? sortBy)
+      [FromQuery] string? keyword,
+      [FromQuery] string? categoryName, // ✅ categoryId yerine string olarak kategori adı
+      [FromQuery] decimal? minPrice,
+      [FromQuery] decimal? maxPrice,
+      [FromQuery] string? sortBy)
         {
-            var query = _context.AdListings.Include(a => a.Category).AsQueryable();
+            var query = _context.AdListings
+                                .Include(a => a.Category)
+                                .AsQueryable();
 
-            // 📌 Başlık veya açıklamada anahtar kelime arama
+            // 📌 Anahtar kelime
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(a => a.Title.Contains(keyword) || a.Description.Contains(keyword));
             }
 
-            // 📌 Kategori filtresi
-            if (categoryId.HasValue)
+            // ✅ Kategori adına göre filtreleme
+            if (!string.IsNullOrEmpty(categoryName))
             {
-                query = query.Where(a => a.CategoryId == categoryId.Value);
+                query = query.Where(a => a.Category.Name.ToLower().Contains(categoryName.ToLower()));
             }
 
-            // 📌 Fiyat aralığı filtresi
+            // 📌 Fiyat filtreleri
             if (minPrice.HasValue)
-            {
                 query = query.Where(a => a.Price >= minPrice.Value);
-            }
-            if (maxPrice.HasValue)
-            {
-                query = query.Where(a => a.Price <= maxPrice.Value);
-            }
 
-            // 📌 Sıralama (fiyat veya en yeni ilanlar)
+            if (maxPrice.HasValue)
+                query = query.Where(a => a.Price <= maxPrice.Value);
+
+            // 📌 Sıralama
             switch (sortBy)
             {
                 case "price_asc":
@@ -69,6 +68,7 @@ namespace KıbrısApp3.Controllers
             var ads = await query.ToListAsync();
             return Ok(ads);
         }
+
         [HttpGet("user-ads")]
         [Authorize]
         public async Task<IActionResult> GetUserAds()
@@ -130,8 +130,8 @@ namespace KıbrısApp3.Controllers
 
         // 📌 İlan ekleme (sadece giriş yapmış kullanıcılar)
         [HttpPost]
-        [Authorize]  // Kullanıcı giriş yapmış olmalı
-        public async Task<IActionResult> AddAd([FromBody] AdListing model)
+        [Authorize]
+        public async Task<IActionResult> AddAd([FromBody] AdListingCreateDto model)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -144,8 +144,8 @@ namespace KıbrısApp3.Controllers
                 Price = model.Price,
                 ImageUrl = model.ImageUrl,
                 CategoryId = model.CategoryId,
-                UserId = userId,  // Oturum açan kullanıcı ID'si otomatik atanıyor
-                Status = "Yayında"  // Varsayılan olarak "Yayında" olacak
+                UserId = userId,
+                Status = model.Status ?? "Yayında"
             };
 
             _context.AdListings.Add(ad);
@@ -153,6 +153,7 @@ namespace KıbrısApp3.Controllers
 
             return Ok(new { message = "İlan başarıyla eklendi!", ad });
         }
+
 
 
         private async Task<bool> IsOwner(int adId)

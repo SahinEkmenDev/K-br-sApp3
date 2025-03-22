@@ -96,6 +96,6 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "KıbrısApp3 API v1");
     });
 }
-
+app.UseStaticFiles();
 app.MapControllers();
 app.Run();

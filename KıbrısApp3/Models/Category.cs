@@ -4,8 +4,10 @@
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int? ParentCategoryId { get; set; } // 📌 Alt kategori desteği
+        public int? ParentCategoryId { get; set; }
+
         public Category ParentCategory { get; set; }
-        public List<Category> SubCategories { get; set; } = new List<Category>();
+        public ICollection<Category> Children { get; set; } = new List<Category>();
     }
+
 }

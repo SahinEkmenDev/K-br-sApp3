@@ -1,4 +1,5 @@
 ﻿using KıbrısApp3.Data;
+using KıbrısApp3.DTO;
 using KıbrısApp3.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,14 +28,17 @@ namespace KıbrısApp3.Controllers
             if (string.IsNullOrEmpty(senderId))
                 return Unauthorized(new { message = "Giriş yapmalısınız!" });
 
-            if (string.IsNullOrEmpty(model.ReceiverId) || string.IsNullOrEmpty(model.Content))
-                return BadRequest(new { message = "Alıcı ID ve mesaj içeriği gereklidir!" });
+            if (string.IsNullOrEmpty(model.ReceiverId) && string.IsNullOrEmpty(model.Content) && string.IsNullOrEmpty(model.ImageUrl))
+                return BadRequest(new { message = "Mesaj içeriği, resim veya konum bilgisi girilmelidir!" });
 
             var message = new Message
             {
                 SenderId = senderId,
                 ReceiverId = model.ReceiverId,
                 Content = model.Content,
+                ImageUrl = model.ImageUrl,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
                 Timestamp = DateTime.UtcNow
             };
 
@@ -43,6 +47,58 @@ namespace KıbrısApp3.Controllers
 
             return Ok(new { message = "Mesaj gönderildi!" });
         }
+
+        [HttpPost("upload-image")]
+        [Authorize]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Dosya seçilmedi.");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+
+            return Ok(new { imageUrl });
+        }
+        [HttpPost("send-location")]
+        [Authorize]
+        public async Task<IActionResult> SendLocation([FromBody] SendLocationDto model)
+        {
+            var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(senderId))
+                return Unauthorized(new { message = "Giriş yapmalısınız!" });
+
+            if (string.IsNullOrEmpty(model.ReceiverId))
+                return BadRequest(new { message = "Alıcı bilgisi gereklidir!" });
+
+            var message = new Message
+            {
+                SenderId = senderId,
+                ReceiverId = model.ReceiverId,
+                Content = model.Message, // Açıklama (opsiyonel)
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
+                Timestamp = DateTime.UtcNow
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Konum başarıyla gönderildi." });
+        }
+
+
 
 
 
