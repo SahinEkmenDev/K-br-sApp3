@@ -22,31 +22,25 @@ namespace KıbrısApp3.Controllers
 
         [HttpPost("send")]
         [Authorize]
-        public async Task<IActionResult> SendMessage([FromBody] Message model)
+        public async Task<IActionResult> SendMessage([FromBody] MessageDto dto)
         {
-            var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(senderId))
-                return Unauthorized(new { message = "Giriş yapmalısınız!" });
-
-            if (string.IsNullOrEmpty(model.ReceiverId) && string.IsNullOrEmpty(model.Content) && string.IsNullOrEmpty(model.ImageUrl))
-                return BadRequest(new { message = "Mesaj içeriği, resim veya konum bilgisi girilmelidir!" });
+            var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(senderId)) return Unauthorized();
 
             var message = new Message
             {
                 SenderId = senderId,
-                ReceiverId = model.ReceiverId,
-                Content = model.Content,
-                ImageUrl = model.ImageUrl,
-                Latitude = model.Latitude,
-                Longitude = model.Longitude,
+                ReceiverId = dto.ReceiverId,
+                Content = dto.Content,
                 Timestamp = DateTime.UtcNow
             };
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Mesaj gönderildi!" });
+            return Ok(new { message = "Mesaj gönderildi." });
         }
+
 
         [HttpPost("upload-image")]
         [Authorize]
