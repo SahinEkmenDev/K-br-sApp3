@@ -1,24 +1,31 @@
-﻿using System.Text.Json.Serialization;
+﻿using KıbrısApp3.Models;
+using System.Text.Json.Serialization;
 
-namespace KıbrısApp3.Models
+public class AdListing
 {
-    public class AdListing
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public decimal Price { get; set; }
-        public string ImageUrl { get; set; }
-        public int CategoryId { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public decimal Price { get; set; }
 
-        [JsonIgnore]  // 📌 Swagger'da Category objesini gösterme
-        public Category Category { get; set; }
+    public string ImageUrl { get; set; } // Opsiyonel olarak bırakabilirsin (tek görsel için)
 
-        public string UserId { get; set; }
+    public string Address { get; set; }
+    public int CategoryId { get; set; }
 
-        [JsonIgnore]  // 📌 Swagger'da User objesini gösterme
-        public ApplicationUser User { get; set; }
+    [JsonIgnore]
+    public Category Category { get; set; }
 
-        public string Status { get; set; } = "Beklemede";
-    }
+    public string UserId { get; set; }
+
+    [JsonIgnore]
+    public ApplicationUser User { get; set; }
+
+    public string Status { get; set; } = "Beklemede";
+
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+
+    // ✅ Çoklu görsel desteği
+    public ICollection<AdImage> Images { get; set; }
 }

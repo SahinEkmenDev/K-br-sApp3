@@ -78,17 +78,19 @@ namespace KıbrısApp3.Controllers
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
-                    Console.WriteLine("⚠️ Kullanıcı ID bulunamadı!");
+                    Console.WriteLine("⚠ Kullanıcı ID bulunamadı!");
                     return Unauthorized(new { message = "Kullanıcı bulunamadı." });
                 }
 
                 var ads = await _context.AdListings
-                                         .Where(a => a.UserId == userId)
-                                         .ToListAsync();
+                          .Include(a => a.Images) // 👈 AdImage tablosunu dahil et
+                          .Where(a => a.UserId == userId)
+                          .ToListAsync();
+
 
                 if (ads == null || ads.Count == 0)
                 {
-                    Console.WriteLine("⚠️ Kullanıcının hiç ilanı yok!");
+                    Console.WriteLine("⚠ Kullanıcının hiç ilanı yok!");
                 }
 
                 return Ok(ads);
@@ -128,25 +130,57 @@ namespace KıbrısApp3.Controllers
         }
 
 
-        // 📌 İlan ekleme (sadece giriş yapmış kullanıcılar)
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddAd([FromBody] AdListingCreateDto model)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { message = "Giriş yapmalısınız!" });
+                return Unauthorized();
 
             var ad = new AdListing
             {
                 Title = model.Title,
                 Description = model.Description,
                 Price = model.Price,
-                ImageUrl = model.ImageUrl,
                 CategoryId = model.CategoryId,
+                Address = model.Address,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
                 UserId = userId,
-                Status = model.Status ?? "Yayında"
+                Status = model.Status ?? "Yayında",
+                ImageUrl = "" // 👈 ilk foto buraya atanabilir
             };
+
+            // Fotoğrafları işleyelim
+            if (model.Base64Images != null && model.Base64Images.Count > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+                // wwwroot/uploads yoksa oluştur
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                // Fotoğrafları kaydet
+                for (int i = 0; i < model.Base64Images.Count; i++)
+                {
+                    var base64 = model.Base64Images[i];
+                    var fileName = $"{Guid.NewGuid()}.jpg";
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+                    var bytes = Convert.FromBase64String(base64.Split(',')[1]);
+
+                    await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+
+                    var imagePath = "/uploads/" + fileName;
+
+                    if (i == 0)
+                        ad.ImageUrl = imagePath;
+
+                    ad.Images ??= new List<AdImage>();
+                    ad.Images.Add(new AdImage { Url = imagePath });
+                }
+
+            }
 
             _context.AdListings.Add(ad);
             await _context.SaveChangesAsync();
@@ -156,19 +190,22 @@ namespace KıbrısApp3.Controllers
 
 
 
+
+
+
         private async Task<bool> IsOwner(int adId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                Console.WriteLine("⚠️ Kullanıcı ID bulunamadı!");
+                Console.WriteLine("⚠ Kullanıcı ID bulunamadı!");
                 return false;
             }
 
             var ad = await _context.AdListings.FindAsync(adId);
             if (ad == null)
             {
-                Console.WriteLine($"⚠️ İlan bulunamadı! ID: {adId}");
+                Console.WriteLine($"⚠ İlan bulunamadı! ID: {adId}");
                 return false;
             }
 

@@ -78,6 +78,17 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
 // 📌 Controller'ları ekleyelim
 builder.Services.AddControllers();
 
@@ -85,6 +96,8 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); // 📌 JWT Middleware'i ekle
+app.UseCors("AllowReactApp");
+
 app.UseAuthorization();
 
 // 📌 Swagger'ı aç

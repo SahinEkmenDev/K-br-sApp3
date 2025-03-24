@@ -3,6 +3,7 @@ using System;
 using KıbrısApp3.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323102321_12")]
+    partial class _12
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace KıbrısApp3.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AdListing", b =>
+            modelBuilder.Entity("KıbrısApp3.Models.AdListing", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,12 +47,6 @@ namespace KıbrısApp3.Migrations
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
@@ -73,28 +70,6 @@ namespace KıbrısApp3.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AdListings");
-                });
-
-            modelBuilder.Entity("KıbrısApp3.Models.AdImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AdListingId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdListingId");
-
-                    b.ToTable("AdImages");
                 });
 
             modelBuilder.Entity("KıbrısApp3.Models.ApplicationUser", b =>
@@ -383,7 +358,7 @@ namespace KıbrısApp3.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AdListing", b =>
+            modelBuilder.Entity("KıbrısApp3.Models.AdListing", b =>
                 {
                     b.HasOne("KıbrısApp3.Models.Category", "Category")
                         .WithMany()
@@ -402,17 +377,6 @@ namespace KıbrısApp3.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KıbrısApp3.Models.AdImage", b =>
-                {
-                    b.HasOne("AdListing", "AdListing")
-                        .WithMany("Images")
-                        .HasForeignKey("AdListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AdListing");
-                });
-
             modelBuilder.Entity("KıbrısApp3.Models.Category", b =>
                 {
                     b.HasOne("KıbrısApp3.Models.Category", "ParentCategory")
@@ -424,7 +388,7 @@ namespace KıbrısApp3.Migrations
 
             modelBuilder.Entity("KıbrısApp3.Models.FavoriteAd", b =>
                 {
-                    b.HasOne("AdListing", "AdListing")
+                    b.HasOne("KıbrısApp3.Models.AdListing", "AdListing")
                         .WithMany()
                         .HasForeignKey("AdListingId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -509,11 +473,6 @@ namespace KıbrısApp3.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("AdListing", b =>
-                {
-                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("KıbrısApp3.Models.Category", b =>
