@@ -15,6 +15,16 @@ namespace KıbrısApp3.Controllers
         {
             _context = context;
         }
+        [HttpGet("{id}/subcategories")]
+        public async Task<IActionResult> GetSubCategories(int id)
+        {
+            var subCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId == id)
+                .ToListAsync();
+
+            return Ok(subCategories);
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> GetCategoryTree()

@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace KıbrısApp3.Controllers
 {
@@ -13,11 +17,68 @@ namespace KıbrısApp3.Controllers
     public class UserController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly Cloudinary _cloudinary;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserController(ApplicationDbContext context)
+
+        public UserController(ApplicationDbContext context, IConfiguration config, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
+
+            var account = new Account(
+                config["Cloudinary:CloudName"],
+                config["Cloudinary:ApiKey"],
+                config["Cloudinary:ApiSecret"]
+            );
+
+            _cloudinary = new Cloudinary(account);
         }
+
+        [HttpPost("upload-profile-picture")]
+        public async Task<IActionResult> UploadProfilePicture([FromBody] string base64Image)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            string actualBase64 = base64Image;
+            if (base64Image.Contains(","))
+            {
+                var parts = base64Image.Split(',');
+                if (parts.Length == 2)
+                    actualBase64 = parts[1];
+            }
+
+            try
+            {
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription($"profile_{userId}", new MemoryStream(Convert.FromBase64String(actualBase64))),
+                    Folder = "profile-pictures"
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    user.ProfileImageUrl = uploadResult.SecureUrl.ToString();
+                    await _userManager.UpdateAsync(user);
+
+                    return Ok(new { imageUrl = user.ProfileImageUrl });
+                }
+
+                return StatusCode(500, new { message = "Cloudinary yükleme başarısız!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Profil fotoğrafı yüklenemedi!", error = ex.Message });
+            }
+        }
+
+
 
         // 📌 Giriş yapan kullanıcının profilini getir
         [HttpGet("me")]

@@ -6,52 +6,65 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using KıbrısApp3.DTO;
+using CloudinaryDotNet.Actions;
+using CloudinaryDotNet;
 
 namespace KıbrısApp3.Controllers
 {
+
     [Route("api/ad-listings")]
     [ApiController]
     public class AdListingController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+       
+        private readonly Cloudinary _cloudinary; // 👈 bunu EKLE
 
-        public AdListingController(ApplicationDbContext context)
+
+        public AdListingController(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
+
+            var account = new Account(
+                config["Cloudinary:CloudName"],
+                config["Cloudinary:ApiKey"],
+                config["Cloudinary:ApiSecret"]
+            );
+
+            _cloudinary = new Cloudinary(account);
         }
+
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchAds(
-      [FromQuery] string? keyword,
-      [FromQuery] string? categoryName, // ✅ categoryId yerine string olarak kategori adı
-      [FromQuery] decimal? minPrice,
-      [FromQuery] decimal? maxPrice,
-      [FromQuery] string? sortBy)
+    [FromQuery] string? keyword,
+    [FromQuery] string? categoryName,
+    [FromQuery] decimal? minPrice,
+    [FromQuery] decimal? maxPrice,
+    [FromQuery] string? sortBy)
         {
             var query = _context.AdListings
                                 .Include(a => a.Category)
+                                    .ThenInclude(c => c.ParentCategory)
+                                .Include(a => a.Images)
                                 .AsQueryable();
 
-            // 📌 Anahtar kelime
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(a => a.Title.Contains(keyword) || a.Description.Contains(keyword));
             }
 
-            // ✅ Kategori adına göre filtreleme
             if (!string.IsNullOrEmpty(categoryName))
             {
                 query = query.Where(a => a.Category.Name.ToLower().Contains(categoryName.ToLower()));
             }
 
-            // 📌 Fiyat filtreleri
             if (minPrice.HasValue)
                 query = query.Where(a => a.Price >= minPrice.Value);
 
             if (maxPrice.HasValue)
                 query = query.Where(a => a.Price <= maxPrice.Value);
 
-            // 📌 Sıralama
             switch (sortBy)
             {
                 case "price_asc":
@@ -65,9 +78,70 @@ namespace KıbrısApp3.Controllers
                     break;
             }
 
-            var ads = await query.ToListAsync();
+            var rawAds = await query.ToListAsync();
+
+            // ✅ Kategori yolunu çözümleyen yardımcı fonksiyon
+            List<string> BuildCategoryPath(Category? category)
+            {
+                var path = new List<string>();
+                while (category != null)
+                {
+                    path.Insert(0, category.Name); // en üste ekler
+                    category = category.ParentCategory;
+                }
+                return path;
+            }
+
+            // ✅ DTO olarak dönüştür
+            var ads = rawAds.Select(a => new
+            {
+                a.Id,
+                a.Title,
+                a.Description,
+                a.Price,
+                a.Address,
+                a.Status,
+                CategoryId = a.Category.Id,
+                CategoryName = a.Category.Name,
+                CategoryPath = BuildCategoryPath(a.Category), // 👈 burası 🔥
+                Images = a.Images.Select(i => new { i.Url }).ToList()
+            }).ToList();
+
             return Ok(ads);
         }
+
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAdById(int id)
+        {
+            var ad = await _context.AdListings
+                .Include(a => a.Images)         // 👈 Tüm resimleri dahil et
+                .Include(a => a.Category)       // 👈 Kategori bilgisi
+                .Include(a => a.User)           // 👈 Kullanıcı bilgisi
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (ad == null)
+                return NotFound(new { message = "İlan bulunamadı!" });
+
+            return Ok(new
+            {
+                ad.Id,
+                ad.Title,
+                ad.Description,
+                ad.Price,
+                ad.Status,
+                ad.Address,
+                ad.Latitude,
+                ad.Longitude,
+                ad.CategoryId,
+                CategoryName = ad.Category?.Name,
+                ad.UserId,
+                SellerName = ad.User?.FullName,
+                ImageUrls = ad.Images.Select(img => img.Url).ToList()
+            });
+        }
+
 
         [HttpGet("user-ads")]
         [Authorize]
@@ -149,37 +223,54 @@ namespace KıbrısApp3.Controllers
                 Longitude = model.Longitude,
                 UserId = userId,
                 Status = model.Status ?? "Yayında",
-                ImageUrl = "" // 👈 ilk foto buraya atanabilir
+                ImageUrl = "" // İlk fotoğraf buraya atanacak
             };
 
-            // Fotoğrafları işleyelim
+            // ✅ Cloudinary üzerinden görsel yükleme
             if (model.Base64Images != null && model.Base64Images.Count > 0)
             {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-
-                // wwwroot/uploads yoksa oluştur
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                // Fotoğrafları kaydet
                 for (int i = 0; i < model.Base64Images.Count; i++)
                 {
                     var base64 = model.Base64Images[i];
-                    var fileName = $"{Guid.NewGuid()}.jpg";
-                    var filePath = Path.Combine(uploadsFolder, fileName);
-                    var bytes = Convert.FromBase64String(base64.Split(',')[1]);
+                    string actualBase64 = base64;
 
-                    await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+                    if (base64.Contains(","))
+                    {
+                        var parts = base64.Split(',');
+                        if (parts.Length == 2)
+                            actualBase64 = parts[1];
+                    }
 
-                    var imagePath = "/uploads/" + fileName;
+                    try
+                    {
+                        var uploadParams = new ImageUploadParams
+                        {
+                            File = new FileDescription($"image_{Guid.NewGuid()}", new MemoryStream(Convert.FromBase64String(actualBase64))),
+                            Folder = "ad-listings"
+                        };
 
-                    if (i == 0)
-                        ad.ImageUrl = imagePath;
+                        var uploadResult = await _cloudinary.UploadAsync(uploadParams);
 
-                    ad.Images ??= new List<AdImage>();
-                    ad.Images.Add(new AdImage { Url = imagePath });
+                        if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            var imageUrl = uploadResult.SecureUrl.ToString();
+
+                            if (i == 0)
+                                ad.ImageUrl = imageUrl;
+
+                            ad.Images ??= new List<AdImage>();
+                            ad.Images.Add(new AdImage { Url = imageUrl });
+                        }
+                        else
+                        {
+                            return StatusCode(500, new { message = "Cloudinary yükleme başarısız!" });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest(new { message = "Görsel yüklenirken hata oluştu!", error = ex.Message });
+                    }
                 }
-
             }
 
             _context.AdListings.Add(ad);
