@@ -181,10 +181,17 @@ namespace KıbrısApp3.Controllers
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetAdsByCategory(int categoryId)
         {
+            // 🧠 Tüm kategorileri alıyoruz
+            var allCategories = await _context.Categories.ToListAsync();
+
+            // 🧠 Alt kategoriler dahil tüm id'leri bul
+            var categoryIds = GetAllSubCategoryIds(categoryId, allCategories);
+
+            // 🎯 Bu id’leri kullanarak filtreleme yap
             var ads = await _context.AdListings
                                      .Include(a => a.Category)
-                                     .Include(a => a.User) // 📌 Kullanıcı bilgilerini de ekledik
-                                     .Where(a => a.CategoryId == categoryId)
+                                     .Include(a => a.User)
+                                     .Where(a => categoryIds.Contains(a.CategoryId))
                                      .Select(a => new
                                      {
                                          a.Id,
@@ -195,7 +202,7 @@ namespace KıbrısApp3.Controllers
                                          a.CategoryId,
                                          CategoryName = a.Category.Name,
                                          a.UserId,
-                                         SellerName = a.User.FullName, // 📌 Kullanıcının adını ekledik
+                                         SellerName = a.User.FullName,
                                          a.Status
                                      })
                                      .ToListAsync();
@@ -337,5 +344,23 @@ namespace KıbrısApp3.Controllers
 
             return Ok(new { message = "İlan silindi!" });
         }
+        // 📌 Kategorinin tüm alt kategori ID’lerini (recursive) bulan yardımcı metot
+        private List<int> GetAllSubCategoryIds(int categoryId, List<Category> allCategories)
+        {
+            List<int> ids = new List<int> { categoryId };
+
+            var children = allCategories
+                            .Where(c => c.ParentCategoryId == categoryId)
+                            .ToList();
+
+            foreach (var child in children)
+            {
+                ids.AddRange(GetAllSubCategoryIds(child.Id, allCategories));
+            }
+
+            return ids;
+        }
+
     }
+
 }

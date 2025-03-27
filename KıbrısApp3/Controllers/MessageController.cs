@@ -106,19 +106,61 @@ namespace KıbrısApp3.Controllers
 
             var messages = await _context.Messages
                 .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
                 .OrderByDescending(m => m.Timestamp)
                 .Select(m => new
                 {
                     m.Id,
                     m.SenderId,
+                    SenderUserName = m.Sender.UserName,
                     m.ReceiverId,
+                    ReceiverUserName = m.Receiver.UserName,
                     m.Content,
+                    m.ImageUrl,
+                    m.Latitude,
+                    m.Longitude,
                     m.Timestamp
                 })
                 .ToListAsync();
 
             return Ok(messages);
         }
+
+
+        [HttpPost("mark-as-read/{messageId}")]
+        public async Task<IActionResult> MarkAsRead(int messageId)
+        {
+            var message = await _context.Messages.FindAsync(messageId);
+            if (message == null)
+                return NotFound();
+
+            message.IsRead = true;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Mesaj okundu olarak işaretlendi." });
+        }
+        [HttpDelete("delete-conversation/{otherUserId}")]
+        public async Task<IActionResult> DeleteConversation(string otherUserId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var messages = await _context.Messages
+                .Where(m =>
+                    (m.SenderId == userId && m.ReceiverId == otherUserId) ||
+                    (m.SenderId == otherUserId && m.ReceiverId == userId))
+                .ToListAsync();
+
+            _context.Messages.RemoveRange(messages);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Konuşma silindi." });
+        }
+
+
+
 
 
     }

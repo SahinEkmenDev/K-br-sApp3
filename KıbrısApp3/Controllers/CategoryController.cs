@@ -62,6 +62,42 @@ namespace KıbrısApp3.Controllers
                 children = category.Children.Select(BuildCategoryDto).ToList()
             };
         }
+        [HttpGet("{id}/tree")]
+        public async Task<IActionResult> GetCategoryTreeFromNode(int id)
+        {
+            var allCategories = await _context.Categories.ToListAsync();
+
+            var categoryDict = allCategories.ToDictionary(c => c.Id);
+
+            foreach (var cat in allCategories)
+            {
+                if (cat.ParentCategoryId.HasValue &&
+                    categoryDict.ContainsKey(cat.ParentCategoryId.Value))
+                {
+                    var parent = categoryDict[cat.ParentCategoryId.Value];
+                    parent.Children.Add(cat);
+                }
+            }
+
+            if (!categoryDict.ContainsKey(id))
+                return NotFound("Kategori bulunamadı.");
+
+            var root = categoryDict[id];
+            var result = BuildCategoryTree(root);
+
+            return Ok(result);
+        }
+
+        private object BuildCategoryTree(Category category)
+        {
+            return new
+            {
+                id = category.Id,
+                name = category.Name,
+                children = category.Children.Select(BuildCategoryTree).ToList()
+            };
+        }
+
 
 
         [HttpPost("seed")]

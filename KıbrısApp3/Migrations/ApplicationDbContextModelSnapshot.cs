@@ -228,6 +228,9 @@ namespace KıbrısApp3.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
 

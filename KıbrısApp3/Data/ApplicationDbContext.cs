@@ -15,6 +15,8 @@ namespace KıbrısApp3.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<FavoriteAd> FavoriteAds { get; set; }
         public DbSet<AdImage> AdImages { get; set; }
+        
+
 
 
     }

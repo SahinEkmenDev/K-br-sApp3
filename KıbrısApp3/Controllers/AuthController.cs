@@ -40,8 +40,15 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        return Ok(new { message = "User registered successfully" });
+        // ✅ Token üret ve dön
+        var token = GenerateJwtToken(user);
+        return Ok(new
+        {
+            message = "Kayıt başarılı.",
+            token = token
+        });
     }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
