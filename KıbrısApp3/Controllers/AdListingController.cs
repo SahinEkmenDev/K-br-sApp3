@@ -37,16 +37,17 @@ namespace KıbrısApp3.Controllers
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchAds(
-    [FromQuery] string? keyword,
-    [FromQuery] string? categoryName,
-    [FromQuery] decimal? minPrice,
-    [FromQuery] decimal? maxPrice,
-    [FromQuery] string? sortBy)
+      [FromQuery] string? keyword,
+      [FromQuery] string? categoryName,
+      [FromQuery] decimal? minPrice,
+      [FromQuery] decimal? maxPrice,
+      [FromQuery] string? sortBy)
         {
             var query = _context.AdListings
                                 .Include(a => a.Category)
                                     .ThenInclude(c => c.ParentCategory)
                                 .Include(a => a.Images)
+                                .Include(a => a.User) // 👈 Kullanıcıyı ekledik
                                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(keyword))
@@ -86,7 +87,7 @@ namespace KıbrısApp3.Controllers
                 var path = new List<string>();
                 while (category != null)
                 {
-                    path.Insert(0, category.Name); // en üste ekler
+                    path.Insert(0, category.Name);
                     category = category.ParentCategory;
                 }
                 return path;
@@ -100,15 +101,19 @@ namespace KıbrısApp3.Controllers
                 a.Description,
                 a.Price,
                 a.Address,
+                a.Latitude,
+                a.Longitude,
                 a.Status,
                 CategoryId = a.Category.Id,
                 CategoryName = a.Category.Name,
-                CategoryPath = BuildCategoryPath(a.Category), // 👈 burası 🔥
+                CategoryPath = BuildCategoryPath(a.Category),
+                SellerName = a.User.FullName, // 👈 Kullanıcının adı ve soyadı
                 Images = a.Images.Select(i => new { i.Url }).ToList()
             }).ToList();
 
             return Ok(ads);
         }
+
 
 
 
@@ -309,6 +314,75 @@ namespace KıbrısApp3.Controllers
 
             return ad.UserId == userId;
         }
+
+
+
+        [HttpPost("cars")]
+        [Authorize]
+        public async Task<IActionResult> AddCarAd([FromBody] CarAdCreateDto model)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var ad = new AdListing
+            {
+                Title = model.Title,
+                Description = model.Description,
+                Price = model.Price,
+                CategoryId = model.CategoryId,
+                Address = model.Address,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
+                UserId = userId,
+                Status = "Yayında",
+                ImageUrl = "" // ilk foto
+            };
+
+            if (model.Base64Images != null && model.Base64Images.Any())
+            {
+                ad.Images = new List<AdImage>();
+
+                for (int i = 0; i < model.Base64Images.Count; i++)
+                {
+                    var base64 = model.Base64Images[i];
+                    var actual = base64.Contains(",") ? base64.Split(',')[1] : base64;
+
+                    var uploadParams = new ImageUploadParams
+                    {
+                        File = new FileDescription($"car-{Guid.NewGuid()}", new MemoryStream(Convert.FromBase64String(actual))),
+                        Folder = "car-ads"
+                    };
+
+                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                    var url = uploadResult.SecureUrl.ToString();
+                    if (i == 0) ad.ImageUrl = url;
+                    ad.Images.Add(new AdImage { Url = url });
+                }
+            }
+
+            _context.AdListings.Add(ad);
+            await _context.SaveChangesAsync();
+
+            // Araç detaylarını ekleyelim
+            var carDetail = new CarAdDetail
+            {
+                AdListingId = ad.Id,
+                Brand = model.Brand,
+                Model = model.Model,
+                Year = model.Year,
+                FuelType = model.FuelType,
+                Transmission = model.Transmission,
+                EngineSize = model.EngineSize
+            };
+
+            _context.CarAdDetails.Add(carDetail);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Araç ilanı başarıyla eklendi!", ad });
+        }
+
 
 
         // 📌 İlan güncelleme (sadece ilan sahibi yapabilir)

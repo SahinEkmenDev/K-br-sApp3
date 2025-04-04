@@ -26,6 +26,9 @@ public class AdListing
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 
+    public CarAdDetail CarDetail { get; set; }
+
+
     // ✅ Çoklu görsel desteği
     public ICollection<AdImage> Images { get; set; }
 }

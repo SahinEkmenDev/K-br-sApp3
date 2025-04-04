@@ -127,6 +127,64 @@ namespace KıbrısApp3.Controllers
             return Ok(messages);
         }
 
+        [HttpGet("conversations")]
+        [Authorize]
+        public async Task<IActionResult> GetConversations()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var conversations = await _context.Messages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .OrderByDescending(m => m.Timestamp)
+                .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    LastMessage = g.OrderByDescending(m => m.Timestamp).FirstOrDefault().Content,
+                    LastMessageTime = g.OrderByDescending(m => m.Timestamp).FirstOrDefault().Timestamp,
+                    User = _context.Users
+                            .Where(u => u.Id == g.Key)
+                            .Select(u => new {
+                                u.Id,
+                                FullName = u.FullName,
+                                ProfilePictureUrl = u.ProfileImageUrl
+
+
+                            })
+                            .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(conversations);
+        }
+
+        [HttpGet("{userId}")]
+        [Authorize]
+        public async Task<IActionResult> GetMessagesWithUser(string userId)
+        {
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var messages = await _context.Messages
+                .Where(m =>
+                    (m.SenderId == currentUserId && m.ReceiverId == userId) ||
+                    (m.SenderId == userId && m.ReceiverId == currentUserId)
+                )
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.SenderId,
+                    m.ReceiverId,
+                    m.Content,
+                    m.Timestamp
+                })
+                .ToListAsync();
+
+            return Ok(messages);
+        }
+
+
+
 
         [HttpPost("mark-as-read/{messageId}")]
         public async Task<IActionResult> MarkAsRead(int messageId)
