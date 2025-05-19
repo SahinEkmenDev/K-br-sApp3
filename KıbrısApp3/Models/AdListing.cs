@@ -7,6 +7,8 @@ public class AdListing
     public string Title { get; set; }
     public string Description { get; set; }
     public decimal Price { get; set; }
+    public string Currency { get; set; } = "TRY";
+
 
     public string ImageUrl { get; set; } // Opsiyonel olarak bırakabilirsin (tek görsel için)
 

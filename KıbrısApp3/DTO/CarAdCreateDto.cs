@@ -14,6 +14,11 @@ namespace KıbrısApp3.DTO
         public decimal Price { get; set; }
 
         [Required]
+        [RegularExpression("^(TRY|GBP)$", ErrorMessage = "Para birimi sadece 'TRY' veya 'GBP' olabilir.")]
+        public string Currency { get; set; } = "TRY";
+
+
+        [Required]
         public int CategoryId { get; set; }
 
         [Required]
@@ -26,22 +31,14 @@ namespace KıbrısApp3.DTO
         public List<string> Base64Images { get; set; } = new();
 
 
-        // Araç özel alanlar
-        [Required]
         public string Brand { get; set; }
-
-        [Required]
         public string Model { get; set; }
-
-        [Required]
         public int Year { get; set; }
-
-        [Required]
-        public string FuelType { get; set; }
-
-        [Required]
-        public string Transmission { get; set; }
-
+        public int Kilometre { get; set; }
+        public int HorsePower { get; set; }
         public int EngineSize { get; set; }
+        public string BodyType { get; set; }
+        public string Transmission { get; set; }
+        public string FuelType { get; set; }
     }
 }

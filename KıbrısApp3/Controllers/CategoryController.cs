@@ -153,6 +153,7 @@ namespace KıbrısApp3.Controllers
     {
         new Category { Name = "Bilgisayar", ParentCategoryId = elektronik.Id },
         new Category { Name = "Tablet", ParentCategoryId = elektronik.Id },
+        new Category { Name = "Laptop", ParentCategoryId = elektronik.Id },
         new Category { Name = "Kulaklık", ParentCategoryId = elektronik.Id },
         new Category { Name = "Akıllı Saat", ParentCategoryId = elektronik.Id },
         new Category { Name = "Oyun Konsolu", ParentCategoryId = elektronik.Id },

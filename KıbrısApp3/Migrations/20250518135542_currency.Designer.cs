@@ -3,6 +3,7 @@ using System;
 using KıbrısApp3.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250518135542_currency")]
+    partial class currency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,10 +185,6 @@ namespace KıbrısApp3.Migrations
                     b.Property<int>("AdListingId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("BodyType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Brand")
                         .IsRequired()
                         .HasColumnType("text");
@@ -196,12 +195,6 @@ namespace KıbrısApp3.Migrations
                     b.Property<string>("FuelType")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("HorsePower")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Kilometre")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Model")
                         .IsRequired()
@@ -334,44 +327,6 @@ namespace KıbrısApp3.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages");
-                });
-
-            modelBuilder.Entity("KıbrısApp3.Models.MotorcycleAdDetail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AdListingId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Brand")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("EngineSize")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("HorsePower")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Kilometre")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdListingId");
-
-                    b.ToTable("MotorcycleAdDetails");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -592,17 +547,6 @@ namespace KıbrısApp3.Migrations
                     b.Navigation("Receiver");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("KıbrısApp3.Models.MotorcycleAdDetail", b =>
-                {
-                    b.HasOne("AdListing", "AdListing")
-                        .WithMany()
-                        .HasForeignKey("AdListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AdListing");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

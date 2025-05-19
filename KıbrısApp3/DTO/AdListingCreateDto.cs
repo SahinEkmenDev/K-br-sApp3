@@ -11,6 +11,11 @@ public class AdListingCreateDto
     [Required]
     public decimal Price { get; set; }
 
+    [Required]
+    [RegularExpression("^(TRY|GBP)$", ErrorMessage = "Para birimi sadece 'TRY' veya 'GBP' olabilir.")]
+    public string Currency { get; set; } = "TRY";
+
+
     public string? ImageUrl { get; set; }
 
     [Required]

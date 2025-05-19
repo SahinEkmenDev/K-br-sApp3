@@ -127,7 +127,7 @@ namespace KıbrısApp3.Controllers
             return Ok(messages);
         }
 
-        [HttpGet("conversations")]
+        [HttpGet("conversation-list")]
         [Authorize]
         public async Task<IActionResult> GetConversations()
         {

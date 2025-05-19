@@ -16,6 +16,9 @@ namespace KıbrısApp3.Data
         public DbSet<FavoriteAd> FavoriteAds { get; set; }
         public DbSet<AdImage> AdImages { get; set; }
         public DbSet<CarAdDetail> CarAdDetails { get; set; }
+        public DbSet<EmailVerification> EmailVerifications { get; set; }
+        public DbSet<MotorcycleAdDetail> MotorcycleAdDetails { get; set; }
+
 
 
 

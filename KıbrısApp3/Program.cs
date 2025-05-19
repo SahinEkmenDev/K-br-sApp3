@@ -1,8 +1,10 @@
 // Program.cs
 using KıbrısApp3.Data;
 using KıbrısApp3.Models;
+using KıbrısApp3.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,6 +17,9 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 
 builder.Services.AddScoped<CloudinaryService>();
+
+
+
 
 
 
