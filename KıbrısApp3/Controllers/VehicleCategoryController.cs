@@ -104,6 +104,81 @@ namespace KıbrısApp3.Controllers
             return Ok("Vasıta altındaki marka ve model detayları başarıyla eklendi.");
         }
 
+
+        // ✅ Seed motor marka + model kategori ağacı
+        [HttpPost("seed-motorcycles")]
+        public async Task<IActionResult> SeedMotorcycleCategories()
+        {
+            var motosikletKategori = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Name == "Motosiklet");
+
+            if (motosikletKategori == null)
+                return BadRequest("Önce 'Motosiklet' ana kategorisi oluşturulmalı!");
+
+            var data = GetMotorcycleData();
+            var all = new List<Category>();
+
+            foreach (var (brand, models) in data)
+            {
+                var brandCategory = new Category
+                {
+                    Name = brand,
+                    ParentCategoryId = motosikletKategori.Id
+                };
+                all.Add(brandCategory);
+                await _context.Categories.AddAsync(brandCategory);
+                await _context.SaveChangesAsync();
+
+                var modelCategories = models.Select(m => new Category
+                {
+                    Name = m,
+                    ParentCategoryId = brandCategory.Id
+                });
+
+                all.AddRange(modelCategories);
+                await _context.Categories.AddRangeAsync(modelCategories);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Tüm motosiklet markaları ve modelleri başarıyla eklendi!", count = all.Count });
+        }
+
+        // ✅ Motosiklet veri kaynağı (dictionary)
+        private Dictionary<string, List<string>> GetMotorcycleData()
+        {
+            return new Dictionary<string, List<string>>
+            {
+                { "ALTAI", new List<string> { "Diğer" } },
+                { "APACHI", new List<string> { "Diğer" } },
+                { "APRILLIA", new List<string> { "Amico 50", "Atlantic 200", "Atlantic 500 Sprint", "Caponord 1000 ETV", "Caponord 1000 ETV ABS", "Caponord 1200 ABS Travel", "RS125", "RS660", "RS4 125 4T", "RSV4 1100", "RSV4 Factory", "RSV4 RF", "Diğer" } },
+                { "ARORA", new List<string> { "Diğer" } },
+                { "ASYA", new List<string> { "Diğer" } },
+                { "BAJAJ", new List<string> { "Pulsar 200NS", "Pulsar 200RS" } },
+                { "BENELLI", new List<string> { "125-S", "502-C", "BN 125", "BN 251", "TNT 125", "TNT 249-S", "TNT 25", "TNT 250", "TNT 600", "TRK 251", "TRK 502", "TRK 502 X" } },
+                { "BMW", new List<string> { "C 400 GT", "C 400 X", "C 600 Sport", "C 650 GT", "C1", "F 650", "F 650 CS", "F 650 GS", "F 650 GS Dakar", "F 650 ST", "F 700 GS", "F 750 GS", "F 800 GS", "F 800 GS Adventure", "F 800 R", "F 800 S", "F 850 GS", "F 900 XR", "G 310 GS", "G 310 R", "G 450 X", "G 650 GS", "G 650 X Country", "K 100 LT", "K 1200 GT", "K 1200LT", "K 1200 R", "K 1200 RS", "K 1200 S", "K 1300 GT", "K 1300 R", "K 1600 Bagger", "K 1600 Grand America", "K 1600 GT", "K 1600 GTL", "K 1600 GTL Exculusive", "K1", "R 100 R", "R 1100 GS", "R 1100 RS", "R 1100 RT", "R 1150 GS", "R 1150 GS Adventure", "R 1150 R", "R 1150 RT", "R 1200 C", "R 1200 CL", "R 1200 GS", "R 1200 GS Adventure", "R 1250 RT", "R 1300 GS", "R Nine T", "R Nine T Scrambler", "R Nine T Urban G/S", "S 1000 R", "S 1000 RR", "S 1000 RR HP", "S 1000 XR" } },
+                { "CF MOTO", new List<string> { "150NK", "250NK", "250SR", "400NK", "450NK", "450SR", "650MT", "650NK" } },
+                { "CHOPPER", new List<string> { "Diğer" } },
+                { "DUCATI", new List<string> { "Diavel", "Monster 821", "Multistrada 1200", "Panigale V4", "Scrambler 1100", "Diğer" } },
+                { "FALCON", new List<string> { "Diğer" } },
+                { "GILERA", new List<string> { "Diğer" } },
+                { "HARLEY DAVIDSON", new List<string> { "Diğer" } },
+                { "HONDA", new List<string> { "Activa 125", "CBR600RR", "CBR 1000 RR", "CRF 250 Rally", "CRF 1000L Africa Twin", "Diğer" } },
+                { "HYOSUNG", new List<string> { "Diğer" } },
+                { "JAWA", new List<string> { "Diğer" } },
+                { "KAWASAKI", new List<string> { "Ninja 300", "Ninja ZX-10 R", "Z 900", "Z 1000", "Versys X300", "Diğer" } },
+                { "KTM", new List<string> { "RC 125", "RC 390", "Duke 200", "Duke 390", "1190 Adventure", "Diğer" } },
+                { "MONDIAL", new List<string> { "Diğer" } },
+                { "RKS", new List<string> { "125 R", "Azure 50", "Bitter", "Dark Blue", "Diğer" } },
+                { "SUZUKI", new List<string> { "GSX-R 125", "GSX-R 600", "GSX-R 1000", "V-STORM 800", "Diğer" } },
+                { "SYM", new List<string> { "Diğer" } },
+                { "TRIUMPH", new List<string> { "Boneville T100", "Daytona 660", "Scrambler", "Speed Triple", "Diğer" } },
+                { "VESPA", new List<string> { "Diğer" } },
+                { "VOLTA", new List<string> { "APX 5", "EV 1", "RS 7", "VM 4", "VT 5", "Diğer" } },
+                { "YAMAHA", new List<string> { "MT-07", "MT-09", "R25", "Tracer 9", "X-Max 250", "R 1", "Diğer" } },
+                { "YUKI", new List<string> { "Diğer" } }
+            };
+        }
+
         // Aşağıdaki metotlar otomobil ve SUV datalarını döner
         private Dictionary<string, List<string>> GetOtomobilData()
         {

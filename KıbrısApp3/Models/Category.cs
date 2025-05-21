@@ -12,5 +12,6 @@ namespace KıbrısApp3.Models
 
         [NotMapped] // 🚨 Veritabanına kaydedilmesin!
         public List<Category> Children { get; set; } = new();
+        public string? IconUrl { get; set; } // ✅ yeni alan
     }
 }

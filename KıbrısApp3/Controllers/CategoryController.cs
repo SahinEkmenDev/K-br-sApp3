@@ -108,17 +108,17 @@ namespace KıbrısApp3.Controllers
 
             // ✅ Ana kategoriler
             var anaKategoriler = new List<Category>
-    {
-        new Category { Name = "Vasıta" },
-         new Category { Name = "Emlak" },
-        new Category { Name = "Telefon" },
-        new Category { Name = "Elektronik" },
-        new Category { Name = "Ev & Yaşam" },
-        new Category { Name = "Giyim & Aksesuar" },
-        new Category { Name = "Kişisel Bakım" },
-        new Category { Name = "Diğer" }
-       
-    };
+{
+    new Category { Name = "Vasıta", IconUrl = "/icons/vasita.png" },
+    new Category { Name = "Emlak", IconUrl = "/icons/emlak/emlak.png" },
+    new Category { Name = "Telefon", IconUrl = "/icons/telefon.png" },
+    new Category { Name = "Elektronik", IconUrl = "/icons/elektronik/elektronik.png" },
+    new Category { Name = "Ev & Yaşam", IconUrl = "/icons/evyasam.png" },
+    new Category { Name = "Giyim & Aksesuar", IconUrl = "/icons/giyim.png" },
+    new Category { Name = "Kişisel Bakım", IconUrl = "/icons/bakim.png" },
+    new Category { Name = "Diğer", IconUrl = "/icons/diger.png" }
+};
+
 
             await _context.Categories.AddRangeAsync(anaKategoriler);
             await _context.SaveChangesAsync();

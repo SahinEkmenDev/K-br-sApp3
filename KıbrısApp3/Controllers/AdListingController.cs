@@ -33,16 +33,19 @@ namespace KıbrısApp3.Controllers
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchAds(
-            [FromQuery] string? keyword,
-            [FromQuery] string? categoryName,
-            [FromQuery] decimal? minPrice,
-            [FromQuery] decimal? maxPrice,
-            [FromQuery] string? sortBy)
+    [FromQuery] string? keyword,
+    [FromQuery] string? categoryName,
+    [FromQuery] decimal? minPrice,
+    [FromQuery] decimal? maxPrice,
+    [FromQuery] string? sortBy)
         {
             var query = _context.AdListings
                 .Include(a => a.Category).ThenInclude(c => c.ParentCategory)
                 .Include(a => a.Images)
                 .Include(a => a.User)
+                .Include(a => a.CarDetail) // ✅ Car detayları dahil
+                .Include(a => a.MotorcycleDetail)
+
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(keyword))
@@ -89,7 +92,7 @@ namespace KıbrısApp3.Controllers
                 a.Title,
                 a.Description,
                 a.Price,
-                a.Currency, // 💸 Eklendi
+                a.Currency,
                 a.Address,
                 a.Latitude,
                 a.Longitude,
@@ -98,11 +101,34 @@ namespace KıbrısApp3.Controllers
                 CategoryName = a.Category.Name,
                 CategoryPath = BuildCategoryPath(a.Category),
                 SellerName = a.User.FullName,
-                Images = a.Images.Select(i => new { i.Url }).ToList()
+                Images = a.Images.Select(i => new { i.Url }).ToList(),
+                CarDetail = a.CarDetail == null ? null : new
+                {
+                    a.CarDetail.Brand,
+                    a.CarDetail.Model,
+                    a.CarDetail.Year,
+                    a.CarDetail.Kilometre,
+                    a.CarDetail.HorsePower,
+                    a.CarDetail.EngineSize,
+                    a.CarDetail.BodyType,
+                    a.CarDetail.Transmission,
+                    a.CarDetail.FuelType
+                },
+                MotorcycleDetail = a.MotorcycleDetail == null ? null : new
+                {
+                    a.MotorcycleDetail.Brand,
+                    a.MotorcycleDetail.Model,
+                    a.MotorcycleDetail.Year,
+                    a.MotorcycleDetail.Kilometre,
+                    a.MotorcycleDetail.HorsePower,
+                    a.MotorcycleDetail.EngineSize
+                }
+
             }).ToList();
 
             return Ok(ads);
         }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAdById(int id)
@@ -111,6 +137,9 @@ namespace KıbrısApp3.Controllers
                 .Include(a => a.Images)
                 .Include(a => a.Category)
                 .Include(a => a.User)
+                .Include(a => a.CarDetail) // ✅ Eklendi
+                .Include(a => a.MotorcycleDetail)
+
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (ad == null)
@@ -122,7 +151,7 @@ namespace KıbrısApp3.Controllers
                 ad.Title,
                 ad.Description,
                 ad.Price,
-                ad.Currency, // 💸 Eklendi
+                ad.Currency,
                 ad.Status,
                 ad.Address,
                 ad.Latitude,
@@ -131,32 +160,91 @@ namespace KıbrısApp3.Controllers
                 CategoryName = ad.Category?.Name,
                 ad.UserId,
                 SellerName = ad.User?.FullName,
-                ImageUrls = ad.Images.Select(img => img.Url).ToList()
+                ImageUrls = ad.Images.Select(img => img.Url).ToList(),
+                CarDetail = ad.CarDetail == null ? null : new
+                {
+                    ad.CarDetail.Brand,
+                    ad.CarDetail.Model,
+                    ad.CarDetail.Year,
+                    ad.CarDetail.Kilometre,
+                    ad.CarDetail.HorsePower,
+                    ad.CarDetail.EngineSize,
+                    ad.CarDetail.BodyType,
+                    ad.CarDetail.Transmission,
+                    ad.CarDetail.FuelType
+                },
+                MotorcycleDetail = ad.MotorcycleDetail == null ? null : new
+                {
+                    ad.MotorcycleDetail.Brand,
+                    ad.MotorcycleDetail.Model,
+                    ad.MotorcycleDetail.Year,
+                    ad.MotorcycleDetail.Kilometre,
+                    ad.MotorcycleDetail.HorsePower,
+                    ad.MotorcycleDetail.EngineSize
+                }
+
             });
         }
+
 
         [HttpGet("user-ads")]
         [Authorize]
         public async Task<IActionResult> GetUserAds()
         {
-            try
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { message = "Kullanıcı bulunamadı." });
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "Kullanıcı bulunamadı." });
 
-                var ads = await _context.AdListings
-                    .Include(a => a.Images)
-                    .Where(a => a.UserId == userId)
-                    .ToListAsync();
+            var ads = await _context.AdListings
+                .Include(a => a.Images)
+                .Include(a => a.CarDetail) // ✅ Eklendi
+                .Include(a => a.MotorcycleDetail)
 
-                return Ok(ads);
-            }
-            catch (Exception ex)
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
+
+            var result = ads.Select(a => new
             {
-                return StatusCode(500, new { message = "Sunucu hatası!", error = ex.Message });
-            }
+                a.Id,
+                a.Title,
+                a.Description,
+                a.Price,
+                a.Currency,
+                a.Status,
+                a.Address,
+                a.Latitude,
+                a.Longitude,
+                a.CategoryId,
+                a.ImageUrl,
+                ImageUrls = a.Images.Select(i => i.Url).ToList(),
+                CarDetail = a.CarDetail == null ? null : new
+                {
+                    a.CarDetail.Brand,
+                    a.CarDetail.Model,
+                    a.CarDetail.Year,
+                    a.CarDetail.Kilometre,
+                    a.CarDetail.HorsePower,
+                    a.CarDetail.EngineSize,
+                    a.CarDetail.BodyType,
+                    a.CarDetail.Transmission,
+                    a.CarDetail.FuelType
+                },
+                MotorcycleDetail = a.MotorcycleDetail == null ? null : new
+                {
+                    a.MotorcycleDetail.Brand,
+                    a.MotorcycleDetail.Model,
+                    a.MotorcycleDetail.Year,
+                    a.MotorcycleDetail.Kilometre,
+                    a.MotorcycleDetail.HorsePower,
+                    a.MotorcycleDetail.EngineSize
+                }
+
+
+            });
+
+            return Ok(result);
         }
+
 
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetAdsByCategory(int categoryId)
@@ -167,25 +255,57 @@ namespace KıbrısApp3.Controllers
             var ads = await _context.AdListings
                 .Include(a => a.Category)
                 .Include(a => a.User)
+                .Include(a => a.Images)
+                .Include(a => a.CarDetail) // ✅ Eklendi
+                .Include(a => a.MotorcycleDetail)
+
                 .Where(a => categoryIds.Contains(a.CategoryId))
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Title,
-                    a.Description,
-                    a.Price,
-                    a.Currency, // 💸 Eklendi
-                    a.ImageUrl,
-                    a.CategoryId,
-                    CategoryName = a.Category.Name,
-                    a.UserId,
-                    SellerName = a.User.FullName,
-                    a.Status
-                })
                 .ToListAsync();
 
-            return Ok(ads);
+            var result = ads.Select(a => new
+            {
+                a.Id,
+                a.Title,
+                a.Description,
+                a.Price,
+                a.Currency,
+                a.Status,
+                a.Address,
+                a.Latitude,
+                a.Longitude,
+                a.ImageUrl,
+                a.CategoryId,
+                CategoryName = a.Category.Name,
+                a.UserId,
+                SellerName = a.User.FullName,
+                Images = a.Images.Select(i => i.Url).ToList(),
+                CarDetail = a.CarDetail == null ? null : new
+                {
+                    a.CarDetail.Brand,
+                    a.CarDetail.Model,
+                    a.CarDetail.Year,
+                    a.CarDetail.Kilometre,
+                    a.CarDetail.HorsePower,
+                    a.CarDetail.EngineSize,
+                    a.CarDetail.BodyType,
+                    a.CarDetail.Transmission,
+                    a.CarDetail.FuelType
+                },
+                MotorcycleDetail = a.MotorcycleDetail == null ? null : new
+                {
+                    a.MotorcycleDetail.Brand,
+                    a.MotorcycleDetail.Model,
+                    a.MotorcycleDetail.Year,
+                    a.MotorcycleDetail.Kilometre,
+                    a.MotorcycleDetail.HorsePower,
+                    a.MotorcycleDetail.EngineSize
+                }
+
+            });
+
+            return Ok(result);
         }
+
 
         [HttpPost]
         [Authorize]

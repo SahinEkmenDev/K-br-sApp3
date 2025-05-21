@@ -56,21 +56,23 @@ namespace KıbrısApp3.Controllers
             var emailSender = new EmailSender(_configuration);
             string htmlBody = $@"
 <html>
-<body style='font-family: Arial; background-color: #f7f7f7; padding: 20px;'>
-  <div style='background-color: white; max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>
-    <h2 style='color: #333;'>KıbrısApp Kayıt Doğrulama</h2>
+<body style='font-family: Arial; background-color: #8ADBD2; padding: 20px;'>
+  <div style='background-color: #F5F5F5; max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center;'>
+    <img src='https://res.cloudinary.com/dqsqxswiu/image/upload/v1747843578/33_aw9hi2.png' alt='KıbrısAlSat Logo' style='max-width: 150px; margin-bottom: 20px;' />
+    <h2 style='color: #333;'>KIBRIS AL SAT Kayıt Doğrulama</h2>
     <p>Merhaba,</p>
-    <p>Kayıt işlemini tamamlamak için aşağıdaki kodu kullanınız:</p>
+    <p> Kayıt işlemini tamamlamak için aşağıdaki kodu kullanınız: </p>
     <div style='font-size: 28px; font-weight: bold; color: #2196F3; margin: 20px 0;'>{code}</div>
-    <p>⚠️ Bu kod <strong>3 dakika</strong> içinde geçerliliğini yitirir.</p>
+    <p>! Bu kod <strong>3 dakika</strong> içinde geçerliliğini yitirecektir.</p>
     <hr style='margin-top: 30px; border: none; border-top: 1px solid #ccc;'/>
-    <p style='font-size: 12px; color: #888;'>Bu e-posta KıbrısApp’e kayıt olmaya çalışan biri tarafından gönderilmiştir.</p>
+    <p style='font-size: 12px; color: #888;'>Bu e-posta KıbrısAlSat’e kayıt olmaya çalışan biri tarafından gönderilmiştir.</p>
   </div>
 </body>
 </html>";
 
 
-            await emailSender.SendEmailAsync(model.Email, "KıbrısApp Kayıt Doğrulama", htmlBody);
+
+            await emailSender.SendEmailAsync(model.Email, "Kıbrıs Al Sat Kayıt Doğrulama", htmlBody);
 
 
             return Ok(new { message = "Kod gönderildi. Lütfen gelen kodu girin." });

@@ -29,6 +29,8 @@ public class AdListing
     public double? Longitude { get; set; }
 
     public CarAdDetail CarDetail { get; set; }
+    public MotorcycleAdDetail MotorcycleDetail { get; set; } // ✅ Yeni eklendi
+
 
 
     // ✅ Çoklu görsel desteği

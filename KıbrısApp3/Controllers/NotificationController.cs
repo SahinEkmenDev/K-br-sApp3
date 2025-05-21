@@ -1,6 +1,11 @@
-﻿using KıbrısApp3.DTO;
+﻿using KıbrısApp3.Data;
+using KıbrısApp3.DTO;
+using KıbrısApp3.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -10,41 +15,71 @@ namespace KıbrısApp3.Controllers
     [Route("api/notifications")]
     public class NotificationController : ControllerBase
     {
-        private readonly IConfiguration _config;
+        private readonly ApplicationDbContext _context;
 
-        public NotificationController(IConfiguration config)
+        public NotificationController(ApplicationDbContext context)
         {
-            _config = config;
+            _context = context;
+        }
+
+        [HttpPost("register-token")]
+        [Authorize]
+        public async Task<IActionResult> RegisterExpoToken([FromBody] string expoPushToken)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var existing = await _context.UserExpoTokens
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (existing != null)
+            {
+                existing.ExpoPushToken = expoPushToken;
+                existing.CreatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                var token = new UserExpoToken
+                {
+                    UserId = userId,
+                    ExpoPushToken = expoPushToken
+                };
+                await _context.UserExpoTokens.AddAsync(token);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Expo token kaydedildi." });
         }
 
         [HttpPost("send")]
-        public async Task<IActionResult> SendNotification([FromBody] FcmNotificationDto dto)
+        public async Task<IActionResult> SendNotification([FromBody] NotificationDto dto)
         {
-            var serverKey = _config["Firebase:ServerKey"]; // appsettings.json’dan gelecek
-            var httpClient = new HttpClient();
+            var userToken = await _context.UserExpoTokens
+                .FirstOrDefaultAsync(x => x.UserId == dto.UserId);
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("key", "=" + serverKey);
+            if (userToken == null)
+                return NotFound(new { message = "Kullanıcıya ait token bulunamadı." });
 
-            var data = new
+            var isSuccess = await SendExpoNotification(userToken.ExpoPushToken, dto.Title, dto.Body);
+            return Ok(new { success = isSuccess });
+        }
+
+        private async Task<bool> SendExpoNotification(string expoPushToken, string title, string body)
+        {
+            using var client = new HttpClient();
+            var payload = new
             {
-                to = dto.FcmToken,
-                notification = new
-                {
-                    title = dto.Title,
-                    body = dto.Body
-                }
+                to = expoPushToken,
+                title = title,
+                body = body
             };
 
-            var json = JsonSerializer.Serialize(data);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync("https://fcm.googleapis.com/fcm/send", content);
-
-            if (response.IsSuccessStatusCode)
-                return Ok(new { message = "Bildirim gönderildi!" });
-
-            var error = await response.Content.ReadAsStringAsync();
-            return StatusCode(500, new { message = "Gönderim hatası!", error });
+            var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await client.PostAsync("https://exp.host/--/api/v2/push/send", content);
+            return response.IsSuccessStatusCode;
         }
     }
+
+
 }
+

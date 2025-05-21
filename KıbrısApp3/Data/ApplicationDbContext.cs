@@ -18,6 +18,8 @@ namespace KıbrısApp3.Data
         public DbSet<CarAdDetail> CarAdDetails { get; set; }
         public DbSet<EmailVerification> EmailVerifications { get; set; }
         public DbSet<MotorcycleAdDetail> MotorcycleAdDetails { get; set; }
+        public DbSet<UserExpoToken> UserExpoTokens { get; set; }
+
 
 
 
