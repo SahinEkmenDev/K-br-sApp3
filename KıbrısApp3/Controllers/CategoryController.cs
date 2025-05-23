@@ -46,22 +46,29 @@ namespace KıbrısApp3.Controllers
             // Sadece en üstteki (parent'ı olmayan) kategorileri döndürüyoruz
             var rootCategories = categories
                 .Where(c => c.ParentCategoryId == null)
-                .Select(BuildCategoryDto)
+                .Select(c => BuildCategoryDto(c, c.IconUrl))
+
                 .ToList();
 
             return Ok(rootCategories);
         }
 
         // DTO dönüşüm (category → nested object)
-        private object BuildCategoryDto(Category category)
+        private object BuildCategoryDto(Category category, string inheritedIconUrl = null)
         {
+            var icon = !string.IsNullOrEmpty(category.IconUrl)
+                ? category.IconUrl
+                : inheritedIconUrl;
+
             return new
             {
                 id = category.Id,
                 name = category.Name,
-                children = category.Children.Select(BuildCategoryDto).ToList()
+                iconUrl = icon,
+                children = category.Children.Select(c => BuildCategoryDto(c, icon)).ToList()
             };
         }
+
         [HttpGet("{id}/tree")]
         public async Task<IActionResult> GetCategoryTreeFromNode(int id)
         {

@@ -39,20 +39,27 @@ namespace KıbrısApp3.Controllers
                 }
             }
 
-            var vasitaCategoryTree = BuildCategoryDto(categoryDict[vasita.Id]);
+            var vasitaCategoryTree = BuildCategoryDto(categoryDict[vasita.Id], categoryDict[vasita.Id].IconUrl);
+
 
             return Ok(vasitaCategoryTree);
         }
 
-        private object BuildCategoryDto(Category category)
+        private object BuildCategoryDto(Category category, string inheritedIconUrl = null)
         {
+            string iconToUse = !string.IsNullOrEmpty(category.IconUrl)
+                ? category.IconUrl
+                : inheritedIconUrl; // eğer alt kategoride ikon yoksa üstten al
+
             return new
             {
                 id = category.Id,
                 name = category.Name,
-                children = category.Children?.Select(BuildCategoryDto).ToList()
+                iconUrl = iconToUse,
+                children = category.Children?.Select(c => BuildCategoryDto(c, iconToUse)).ToList()
             };
         }
+
 
 
         [HttpPost("seed-details")]
@@ -142,6 +149,34 @@ namespace KıbrısApp3.Controllers
 
             return Ok(new { message = "Tüm motosiklet markaları ve modelleri başarıyla eklendi!", count = all.Count });
         }
+
+        [HttpGet("motorcycle-tree")]
+        public async Task<IActionResult> GetMotorcycleCategoryTree()
+        {
+            var root = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Motosiklet");
+            if (root == null)
+                return NotFound("Motosiklet kategorisi bulunamadı.");
+
+            var allCategories = await _context.Categories.ToListAsync();
+
+            var categoryDict = allCategories.ToDictionary(c => c.Id);
+
+            foreach (var cat in allCategories)
+                cat.Children = new List<Category>();
+
+            foreach (var category in allCategories)
+            {
+                if (category.ParentCategoryId.HasValue &&
+                    categoryDict.ContainsKey(category.ParentCategoryId.Value))
+                {
+                    categoryDict[category.ParentCategoryId.Value].Children.Add(category);
+                }
+            }
+
+            var result = BuildCategoryDto(categoryDict[root.Id], categoryDict[root.Id].IconUrl);
+            return Ok(result);
+        }
+
 
         // ✅ Motosiklet veri kaynağı (dictionary)
         private Dictionary<string, List<string>> GetMotorcycleData()

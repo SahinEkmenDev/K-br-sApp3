@@ -101,6 +101,7 @@ namespace KıbrısApp3.Controllers
                 CategoryName = a.Category.Name,
                 CategoryPath = BuildCategoryPath(a.Category),
                 SellerName = a.User.FullName,
+                UserId = a.UserId,
                 Images = a.Images.Select(i => new { i.Url }).ToList(),
                 CarDetail = a.CarDetail == null ? null : new
                 {
@@ -214,6 +215,7 @@ namespace KıbrısApp3.Controllers
                 a.Address,
                 a.Latitude,
                 a.Longitude,
+                a.UserId,
                 a.CategoryId,
                 a.ImageUrl,
                 ImageUrls = a.Images.Select(i => i.Url).ToList(),
