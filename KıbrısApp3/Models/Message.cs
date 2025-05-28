@@ -7,7 +7,8 @@
         public ApplicationUser Sender { get; set; }
         public string ReceiverId { get; set; }
         public ApplicationUser Receiver { get; set; }
-        public string Content { get; set; }
+        public string? Content { get; set; } // nullable yap
+
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         public bool IsRead { get; set; } = false;
 

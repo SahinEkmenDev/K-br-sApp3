@@ -1,4 +1,6 @@
-﻿using KıbrısApp3.Data;
+﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet;
+using KıbrısApp3.Data;
 using KıbrısApp3.DTO;
 using KıbrısApp3.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -65,6 +67,78 @@ namespace KıbrısApp3.Controllers
 
             return Ok(new { imageUrl });
         }
+
+        [HttpPost("send-image")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SendImageMessage([FromForm] SendImageMessageDto dto)
+        {
+            var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(senderId))
+                return Unauthorized();
+
+            if (dto.File == null || dto.File.Length == 0)
+                return BadRequest("Dosya seçilmedi.");
+
+            try
+            {
+                // appsettings.json'dan Cloudinary bilgilerini oku
+                var config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json")
+                    .Build();
+
+                var account = new Account(
+                    config["Cloudinary:CloudName"],
+                    config["Cloudinary:ApiKey"],
+                    config["Cloudinary:ApiSecret"]
+                );
+
+                var cloudinary = new Cloudinary(account);
+
+                using var memoryStream = new MemoryStream();
+                await dto.File.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(dto.File.FileName, memoryStream),
+                    Folder = "message-images"
+                };
+
+                var uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
+                    return StatusCode(500, new { message = "Cloudinary yükleme başarısız." });
+
+                var imageUrl = uploadResult.SecureUrl.ToString();
+
+                var message = new Message
+                {
+                    SenderId = senderId,
+                    ReceiverId = dto.ReceiverId,
+                    ImageUrl = imageUrl,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                _context.Messages.Add(message);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Fotoğraf gönderildi", imageUrl });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Yükleme sırasında hata oluştu.", error = ex.Message });
+            }
+        }
+
+
+
+
+
+
+
+
         [HttpPost("send-location")]
         [Authorize]
         public async Task<IActionResult> SendLocation([FromBody] SendLocationDto model)
@@ -157,7 +231,6 @@ namespace KıbrısApp3.Controllers
 
             return Ok(conversations);
         }
-
         [HttpGet("{userId}")]
         [Authorize]
         public async Task<IActionResult> GetMessagesWithUser(string userId)
@@ -169,19 +242,27 @@ namespace KıbrısApp3.Controllers
                     (m.SenderId == currentUserId && m.ReceiverId == userId) ||
                     (m.SenderId == userId && m.ReceiverId == currentUserId)
                 )
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
                 .OrderBy(m => m.Timestamp)
                 .Select(m => new
                 {
                     m.Id,
                     m.SenderId,
+                    senderUserName = m.Sender.UserName,
                     m.ReceiverId,
+                    receiverUserName = m.Receiver.UserName,
                     m.Content,
+                    m.ImageUrl,
+                    m.Latitude,
+                    m.Longitude,
                     m.Timestamp
                 })
                 .ToListAsync();
 
             return Ok(messages);
         }
+
 
 
 

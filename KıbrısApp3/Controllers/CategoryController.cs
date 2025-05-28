@@ -68,7 +68,6 @@ namespace KıbrısApp3.Controllers
                 children = category.Children.Select(c => BuildCategoryDto(c, icon)).ToList()
             };
         }
-
         [HttpGet("{id}/tree")]
         public async Task<IActionResult> GetCategoryTreeFromNode(int id)
         {
@@ -90,20 +89,73 @@ namespace KıbrısApp3.Controllers
                 return NotFound("Kategori bulunamadı.");
 
             var root = categoryDict[id];
-            var result = BuildCategoryTree(root);
+            var result = BuildCategoryTree(root, root.IconUrl); // ✅ Buraya yazıyoruz
 
             return Ok(result);
         }
 
-        private object BuildCategoryTree(Category category)
+        private object BuildCategoryTreeWithIconInheritance(Category category, string inheritedIconUrl = null)
         {
+            var icon = !string.IsNullOrEmpty(category.IconUrl)
+                ? category.IconUrl
+                : inheritedIconUrl;
+
             return new
             {
                 id = category.Id,
                 name = category.Name,
-                children = category.Children.Select(BuildCategoryTree).ToList()
+                iconUrl = icon,
+                children = category.Children
+                    .Select(child => BuildCategoryTreeWithIconInheritance(child, icon))
+                    .ToList()
             };
         }
+
+
+        [HttpGet("tree")]
+        public async Task<IActionResult> GetFullCategoryTree()
+        {
+            var allCategories = await _context.Categories.ToListAsync();
+            var categoryDict = allCategories.ToDictionary(c => c.Id);
+
+            // Parent-child bağla
+            foreach (var cat in allCategories)
+            {
+                if (cat.ParentCategoryId.HasValue &&
+                    categoryDict.ContainsKey(cat.ParentCategoryId.Value))
+                {
+                    var parent = categoryDict[cat.ParentCategoryId.Value];
+                    parent.Children.Add(cat);
+                }
+            }
+
+            // En üst (root) kategorileri bul
+            var rootCategories = allCategories
+                .Where(c => c.ParentCategoryId == null)
+                .Select(c => BuildCategoryTreeWithIconInheritance(c, c.IconUrl)) // icon miras başlat
+                .ToList();
+
+            return Ok(rootCategories);
+        }
+
+
+
+
+        private object BuildCategoryTree(Category category, string inheritedIconUrl = null)
+        {
+            var icon = !string.IsNullOrEmpty(category.IconUrl)
+                ? category.IconUrl
+                : inheritedIconUrl;
+
+            return new
+            {
+                id = category.Id,
+                name = category.Name,
+                iconUrl = icon,
+                children = category.Children.Select(child => BuildCategoryTree(child, icon)).ToList()
+            };
+        }
+
 
 
 
