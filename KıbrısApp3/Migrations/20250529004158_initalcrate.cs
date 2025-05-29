@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     /// <inheritdoc />
-    public partial class initasl : Migration
+    public partial class initalcrate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

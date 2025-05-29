@@ -169,80 +169,77 @@ namespace KıbrısApp3.Controllers
             if (_context.Categories.Any())
                 return Ok("Kategoriler zaten eklenmiş.");
 
-            // ✅ Ana kategoriler
+            // Ana kategoriler
             var anaKategoriler = new List<Category>
-{
-    new Category { Name = "Vasıta", IconUrl = "/icons/arac.png", DisplayOrder = 1 },
-    new Category { Name = "Emlak", IconUrl = "/icons/emlak.png", DisplayOrder = 2 },
-    new Category { Name = "Telefon", IconUrl = "/icons/telefon.png", DisplayOrder = 3 },
-    new Category { Name = "Elektronik", IconUrl = "/icons/elektronik1.png", DisplayOrder = 4 },
-    new Category { Name = "Ev & Yaşam", IconUrl = "/icons/evyasam.png", DisplayOrder = 5 },
-    new Category { Name = "Giyim & Aksesuar", IconUrl = "/icons/giyim.png", DisplayOrder = 6 },
-    new Category { Name = "Kişisel Bakım", IconUrl = "/icons/bakim.png", DisplayOrder = 7 },
-    new Category { Name = "Diğer", IconUrl = "/icons/diger.png", DisplayOrder = 8 }
-};
-
+    {
+        new Category { Name = "Vasıta", IconUrl = "/icons/arac.png", DisplayOrder = 1 },
+        new Category { Name = "Emlak", IconUrl = "/icons/emlak.png", DisplayOrder = 2 },
+        new Category { Name = "Telefon", IconUrl = "/icons/telefon.png", DisplayOrder = 3 },
+        new Category { Name = "Elektronik", IconUrl = "/icons/elektronik1.png", DisplayOrder = 4 },
+        new Category { Name = "Ev & Yaşam", IconUrl = "/icons/evyasam.png", DisplayOrder = 5 },
+        new Category { Name = "Giyim & Aksesuar", IconUrl = "/icons/giyim.png", DisplayOrder = 6 },
+        new Category { Name = "Kişisel Bakım", IconUrl = "/icons/bakim.png", DisplayOrder = 7 },
+        new Category { Name = "Diğer", IconUrl = "/icons/diger.png", DisplayOrder = 8 }
+    };
 
             await _context.Categories.AddRangeAsync(anaKategoriler);
             await _context.SaveChangesAsync();
 
             // Ana kategori referansları
-            var vasita = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Vasıta");
-            var telefon = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Telefon");
-            var elektronik = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Elektronik");
-            var emlak = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "Emlak");
+            var vasita = await _context.Categories.FirstAsync(c => c.Name == "Vasıta");
+            var telefon = await _context.Categories.FirstAsync(c => c.Name == "Telefon");
+            var elektronik = await _context.Categories.FirstAsync(c => c.Name == "Elektronik");
+            var emlak = await _context.Categories.FirstAsync(c => c.Name == "Emlak");
 
-            // ✅ Vasıta alt kategorileri
+            // Vasıta alt kategorileri
             var vasitaAltKategoriler = new List<Category>
     {
-        new Category { Name = "Otomobil", ParentCategoryId = vasita.Id },
-        new Category { Name = "Arazi-SUV-Pick-Up", ParentCategoryId = vasita.Id },
-        new Category { Name = "Motosiklet", ParentCategoryId = vasita.Id },
-        new Category { Name = "ATV-UTV", ParentCategoryId = vasita.Id },
-        new Category { Name = "Karavan", ParentCategoryId = vasita.Id }
-           };
+        new Category { Name = "Otomobil", ParentCategoryId = vasita.Id, IconUrl = "/icons/otomobil.png" },
+        new Category { Name = "Arazi-SUV-Pick-Up", ParentCategoryId = vasita.Id, IconUrl = "/icons/suv.png" },
+        new Category { Name = "Motosiklet", ParentCategoryId = vasita.Id, IconUrl = "/icons/motosiklet.png" },
+        new Category { Name = "ATV-UTV", ParentCategoryId = vasita.Id, IconUrl = "/icons/utv.png" },
+        new Category { Name = "Karavan", ParentCategoryId = vasita.Id, IconUrl = "/icons/karavan.png" }
+    };
 
-            // ✅ Telefon alt kategorileri
             var telefonAltKategoriler = new List<Category>
     {
-        new Category { Name = "iPhone", ParentCategoryId = telefon.Id },
-        new Category { Name = "Samsung", ParentCategoryId = telefon.Id },
-        new Category { Name = "Xiaomi", ParentCategoryId = telefon.Id },
-        new Category { Name = "Huawei", ParentCategoryId = telefon.Id }
+        new Category { Name = "iPhone", ParentCategoryId = telefon.Id, IconUrl = "/icons/telefon.png" },
+        new Category { Name = "Samsung", ParentCategoryId = telefon.Id, IconUrl = "/icons/telefon.png" },
+        new Category { Name = "Xiaomi", ParentCategoryId = telefon.Id, IconUrl = "/icons/telefon.png" },
+        new Category { Name = "Huawei", ParentCategoryId = telefon.Id, IconUrl = "/icons/telefon.png" }
     };
 
-            // ✅ Elektronik alt kategorileri
             var elektronikAltKategoriler = new List<Category>
     {
-        new Category { Name = "Bilgisayar", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Tablet", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Laptop", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Kulaklık", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Akıllı Saat", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Oyun Konsolu", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Televizyon", ParentCategoryId = elektronik.Id },
-        new Category { Name = "Diğer", ParentCategoryId = elektronik.Id }
+        new Category { Name = "Bilgisayar", ParentCategoryId = elektronik.Id, IconUrl = "/icons/masaustu.png" },
+        new Category { Name = "Tablet", ParentCategoryId = elektronik.Id, IconUrl = "/icons/tablet.png" },
+        new Category { Name = "Laptop", ParentCategoryId = elektronik.Id, IconUrl = "/icons/laptop.png" },
+        new Category { Name = "Kulaklık", ParentCategoryId = elektronik.Id, IconUrl = "/icons/kulaklık.png" },
+        new Category { Name = "Akıllı Saat", ParentCategoryId = elektronik.Id, IconUrl = "/icons/akıllı saat.png" },
+        new Category { Name = "Oyun Konsolu", ParentCategoryId = elektronik.Id, IconUrl = "/icons/oyunkonsolu.png" },
+        new Category { Name = "Televizyon", ParentCategoryId = elektronik.Id, IconUrl = "/icons/televizyon.png" },
+        new Category { Name = "Diğer", ParentCategoryId = elektronik.Id, IconUrl = "/icons/elektronik-diger.png" }
     };
 
-            // ✅ Emlak alt kategorileri
             var emlakAltKategoriler = new List<Category>
     {
-        new Category { Name = "Konut", ParentCategoryId = emlak.Id },
-        new Category { Name = "İşyeri", ParentCategoryId = emlak.Id },
-        new Category { Name = "Arsa", ParentCategoryId = emlak.Id }
+        new Category { Name = "Konut", ParentCategoryId = emlak.Id, IconUrl = "/icons/konut.png" },
+        new Category { Name = "İşyeri", ParentCategoryId = emlak.Id, IconUrl = "/icons/işyeri.png" },
+        new Category { Name = "Arsa", ParentCategoryId = emlak.Id, IconUrl = "/icons/arsa.png" }
     };
 
-            // Hepsini tek seferde ekle
             await _context.Categories.AddRangeAsync(vasitaAltKategoriler);
             await _context.Categories.AddRangeAsync(telefonAltKategoriler);
             await _context.Categories.AddRangeAsync(elektronikAltKategoriler);
             await _context.Categories.AddRangeAsync(emlakAltKategoriler);
+
             await _context.SaveChangesAsync();
 
-            return Ok("Ana ve alt kategoriler başarıyla eklendi.");
+            return Ok("Tüm kategoriler ve alt kategoriler, ikonlarıyla birlikte başarıyla kaydedildi.");
         }
 
 
-       
+
+
     }
 }

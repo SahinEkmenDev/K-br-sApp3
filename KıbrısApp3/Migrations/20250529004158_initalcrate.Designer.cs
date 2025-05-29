@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250528223310_initasl")]
-    partial class initasl
+    [Migration("20250529004158_initalcrate")]
+    partial class initalcrate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
