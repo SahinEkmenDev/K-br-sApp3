@@ -46,7 +46,9 @@ namespace KıbrısApp3.Controllers
             // Sadece en üstteki (parent'ı olmayan) kategorileri döndürüyoruz
             var rootCategories = categories
                 .Where(c => c.ParentCategoryId == null)
+                .OrderBy(c => c.DisplayOrder)
                 .Select(c => BuildCategoryDto(c, c.IconUrl))
+
 
                 .ToList();
 
@@ -132,7 +134,9 @@ namespace KıbrısApp3.Controllers
             // En üst (root) kategorileri bul
             var rootCategories = allCategories
                 .Where(c => c.ParentCategoryId == null)
+                .OrderBy(c => c.DisplayOrder)
                 .Select(c => BuildCategoryTreeWithIconInheritance(c, c.IconUrl)) // icon miras başlat
+
                 .ToList();
 
             return Ok(rootCategories);
@@ -168,14 +172,14 @@ namespace KıbrısApp3.Controllers
             // ✅ Ana kategoriler
             var anaKategoriler = new List<Category>
 {
-    new Category { Name = "Vasıta", IconUrl = "/icons/vasita.png" },
-    new Category { Name = "Emlak", IconUrl = "/icons/emlak/emlak.png" },
-    new Category { Name = "Telefon", IconUrl = "/icons/telefon.png" },
-    new Category { Name = "Elektronik", IconUrl = "/icons/elektronik/elektronik.png" },
-    new Category { Name = "Ev & Yaşam", IconUrl = "/icons/evyasam.png" },
-    new Category { Name = "Giyim & Aksesuar", IconUrl = "/icons/giyim.png" },
-    new Category { Name = "Kişisel Bakım", IconUrl = "/icons/bakim.png" },
-    new Category { Name = "Diğer", IconUrl = "/icons/diger.png" }
+    new Category { Name = "Vasıta", IconUrl = "/icons/arac.png", DisplayOrder = 1 },
+    new Category { Name = "Emlak", IconUrl = "/icons/emlak.png", DisplayOrder = 2 },
+    new Category { Name = "Telefon", IconUrl = "/icons/telefon.png", DisplayOrder = 3 },
+    new Category { Name = "Elektronik", IconUrl = "/icons/elektronik1.png", DisplayOrder = 4 },
+    new Category { Name = "Ev & Yaşam", IconUrl = "/icons/evyasam.png", DisplayOrder = 5 },
+    new Category { Name = "Giyim & Aksesuar", IconUrl = "/icons/giyim.png", DisplayOrder = 6 },
+    new Category { Name = "Kişisel Bakım", IconUrl = "/icons/bakim.png", DisplayOrder = 7 },
+    new Category { Name = "Diğer", IconUrl = "/icons/diger.png", DisplayOrder = 8 }
 };
 
 

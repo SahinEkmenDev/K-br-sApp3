@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250521144011_AddUserExpoToken")]
-    partial class AddUserExpoToken
+    [Migration("20250528223310_initasl")]
+    partial class initasl
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -233,6 +233,9 @@ namespace KıbrısApp3.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<string>("IconUrl")
                         .HasColumnType("text");
 
@@ -307,7 +310,6 @@ namespace KıbrısApp3.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ImageUrl")

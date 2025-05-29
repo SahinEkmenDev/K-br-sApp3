@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KıbrısApp3.Migrations
 {
     /// <inheritdoc />
-    public partial class initialcreate : Migration
+    public partial class initasl : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -61,7 +61,8 @@ namespace KıbrısApp3.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     ParentCategoryId = table.Column<int>(type: "integer", nullable: true),
-                    IconUrl = table.Column<string>(type: "text", nullable: true)
+                    IconUrl = table.Column<string>(type: "text", nullable: true),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -202,7 +203,7 @@ namespace KıbrısApp3.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SenderId = table.Column<string>(type: "text", nullable: false),
                     ReceiverId = table.Column<string>(type: "text", nullable: false),
-                    Content = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: true),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
@@ -221,6 +222,27 @@ namespace KıbrısApp3.Migrations
                     table.ForeignKey(
                         name: "FK_Messages_AspNetUsers_SenderId",
                         column: x => x.SenderId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserExpoTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ExpoPushToken = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserExpoTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserExpoTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -448,6 +470,11 @@ namespace KıbrısApp3.Migrations
                 table: "MotorcycleAdDetails",
                 column: "AdListingId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserExpoTokens_UserId",
+                table: "UserExpoTokens",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -485,6 +512,9 @@ namespace KıbrısApp3.Migrations
 
             migrationBuilder.DropTable(
                 name: "MotorcycleAdDetails");
+
+            migrationBuilder.DropTable(
+                name: "UserExpoTokens");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

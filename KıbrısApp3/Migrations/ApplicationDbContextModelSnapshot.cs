@@ -230,6 +230,9 @@ namespace KıbrısApp3.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<string>("IconUrl")
                         .HasColumnType("text");
 

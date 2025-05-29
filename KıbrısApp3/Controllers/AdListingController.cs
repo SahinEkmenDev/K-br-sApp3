@@ -521,22 +521,24 @@ namespace KıbrısApp3.Controllers
 
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateAd(int id, [FromBody] AdListing model)
+        public async Task<IActionResult> UpdateAd(int id, [FromBody] AdUpdateDto model)
         {
             if (!await IsOwner(id))
                 return Forbid();
 
             var ad = await _context.AdListings.FindAsync(id);
+            if (ad == null)
+                return NotFound(new { message = "İlan bulunamadı." });
+
             ad.Title = model.Title;
             ad.Description = model.Description;
             ad.Price = model.Price;
-            ad.Currency = model.Currency; // 💸 Güncellenebilir
-            ad.CategoryId = model.CategoryId;
-            ad.ImageUrl = model.ImageUrl;
 
             await _context.SaveChangesAsync();
-            return Ok(ad);
+            return Ok(new { message = "İlan güncellendi!", ad });
         }
+
+
 
         [HttpDelete("{id}")]
         [Authorize]
